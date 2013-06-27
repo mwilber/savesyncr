@@ -1,10 +1,13 @@
+
 package com.greenzeta.savesyncr;
 
 import android.view.Menu;
 
 import java.io.IOException;
 import java.util.List;
+import java.io.File;
 
+import android.os.Environment;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +15,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+import android.util.Log;
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxFile;
@@ -132,5 +136,47 @@ public class MainActivity extends Activity {
 			mTestOutput.setText("Dropbox test failed: " + e);
 		}
 	}
+	
+	public void DoUpload(View view){
+		Log.d("testing","step1");
+		String fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
+		File tf = new File(fsRoot+File.separator+"ScummVM"+File.separator+"Saves"+File.separator+"monkey2.s00");
+		if( tf != null ){
+			//Log.d("directory",getExternalFilesDir(null).toString());
+			Log.d("upload",tf.getName());
+			Log.d("filesize",String.valueOf(tf.length()));
+			
+			try{
+				DbxPath testPath = new DbxPath(DbxPath.ROOT, tf.getName());
+	
+				// Create DbxFileSystem for synchronized file access.
+				DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+	
+				// Print the contents of the root folder.  This will block until we can
+				// sync metadata the first time.
+				List<DbxFileInfo> infos = dbxFs.listFolder(DbxPath.ROOT);
+				mTestOutput.setText("\nContents of app folder:\n");
+				for (DbxFileInfo info : infos) {
+					mTestOutput.append("    " + info.path + ", " + info.modifiedTime + '\n');
+				}
+	
+				// Create a test file only if it doesn't already exist.
+				if (!dbxFs.exists(testPath)) {
+					DbxFile testFile = dbxFs.create(testPath);
+					try {
+						testFile.writeFromExistingFile(tf,false);
+					} finally {
+						testFile.close();
+					}
+					mTestOutput.append("\nCreated new file '" + testPath + "'.\n");
+				}
+			}catch(Exception e){
+				Log.e("ERROR POSTING FILE:",e.getMessage());
+			}
+		}else{
+			Log.d("upload","file not found. error. ready_");
+		}
+	}
+	
 
 }
