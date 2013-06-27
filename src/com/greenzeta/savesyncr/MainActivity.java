@@ -1,4 +1,3 @@
-
 package com.greenzeta.savesyncr;
 
 import android.view.Menu;
@@ -22,6 +21,7 @@ import com.dropbox.sync.android.DbxFile;
 import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxFileSystem;
 import com.dropbox.sync.android.DbxPath;
+import java.io.*;
 
 public class MainActivity extends Activity {
 
@@ -175,8 +175,48 @@ public class MainActivity extends Activity {
 			}
 		}else{
 			Log.d("upload","file not found. error. ready_");
-		}
+		}	
 	}
 	
+	
+	public void DoDownload( View view ){
+		
+		try{
+			DbxPath testPath = new DbxPath(DbxPath.ROOT, "monkey2.s00");
+			String fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
+			File tf = new File(fsRoot+File.separator+"ScummVM"+File.separator+"Saves"+File.separator+"monkey2b.s00");
+	
+			// Create DbxFileSystem for synchronized file access.
+			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+			
+			if (dbxFs.isFile(testPath)) {
+				FileInputStream resultData;
+				DbxFile testFile = dbxFs.open(testPath);
+				try {
+					resultData = testFile.getReadStream();
+					
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					byte[] b = new byte[1024];
+					int bytesRead = 0;
+					while ((bytesRead = resultData.read(b)) != -1) {
+						bos.write(b, 0, bytesRead);
+					}
+					byte[] bytes = bos.toByteArray();
+					FileOutputStream fos = new FileOutputStream(tf);
+					fos.write(bytes);
+					fos.close();
+					Log.d("filewrite","File Write Complete!!!");
+				} finally {
+					testFile.close();
+				}
+				mTestOutput.append("\nRead file '" + testPath + "' and got data:\n    " + resultData);
+			} else if (dbxFs.isFolder(testPath)) {
+				mTestOutput.append("'" + testPath.toString() + "' is a folder.\n");
+			}
+			
+		}catch(Exception e){
+			Log.e("ERROR RETRIEVING FILE:",e.getMessage());
+		}
+	}
 
 }
