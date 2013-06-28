@@ -63,8 +63,8 @@ public class MainActivity extends Activity {
 		pStore = new PathStore();
 		
 		// TODO: load this data from external storage
+		pStore.Add("savesyncr.txt",File.separator);
 		pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
-		pStore.Add("monkey2.s01",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
 		
 		try{
 			// Adapter for the file selector spinner
@@ -80,7 +80,7 @@ public class MainActivity extends Activity {
 			
 			fileSpin.setOnItemSelectedListener(new OnItemSelectedListener(){
 				public void onItemSelected( AdapterView<?> arg0, View arg1, int arg2, long arg3 ){
-					mTestOutput.append(list.get(arg2).toString());
+					mTestOutput.append(list.get(arg2).toString()+"\n");
 				}
 				public void onNothingSelected(AdapterView<?> arg0){
 					
@@ -139,8 +139,9 @@ public class MainActivity extends Activity {
 	
 	public void DoUpload(View view){
 		Log.d("testing","step1");
+		boolean doUpdate = false;
 		String fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-		File tf = new File(fsRoot+File.separator+"ScummVM"+File.separator+"Saves"+File.separator+"monkey2.s00");
+		File tf = new File(fsRoot+File.separator+"savesyncr.txt");
 		if( tf != null ){
 			//Log.d("directory",getExternalFilesDir(null).toString());
 			Log.d("upload",tf.getName());
@@ -159,10 +160,28 @@ public class MainActivity extends Activity {
 				for (DbxFileInfo info : infos) {
 					mTestOutput.append("    " + info.path + ", " + info.modifiedTime + '\n');
 				}
-	
-				DbxFile testFile = dbxFs.create(testPath);
+				
+				DbxFile testFile;
+				
+				
+				if( dbxFs.exists(testPath) ){
+					Log.d("FILE CHECK3", "OPEN");
+					testFile = dbxFs.open(testPath);
+				}else{
+					Log.d("FILE CHECK3", "CREATE");
+					testFile = dbxFs.create(testPath);
+				}
 				try {
+					while( !testFile.getSyncStatus().isCached ){
+						Log.d("Loading file to cache",String.valueOf(testFile.getSyncStatus().bytesTransferred));
+						//TODO: add check to break this loop
+					}
 					testFile.writeFromExistingFile(tf,false);
+					while( testFile.getSyncStatus().pending.toString() != "NONE" )
+						Log.d("SYNC STATUS", testFile.getSyncStatus().pending.toString());
+					
+					doUpdate = true;
+
 				} finally {
 					testFile.close();
 				}
@@ -170,6 +189,10 @@ public class MainActivity extends Activity {
 
 			}catch(Exception e){
 				Log.e("ERROR POSTING FILE:",e.getMessage());
+			}
+			
+			if( doUpdate ){
+				DoDownload( view );
 			}
 		}else{
 			Log.d("upload","file not found. error. ready_");
@@ -180,9 +203,9 @@ public class MainActivity extends Activity {
 	public void DoDownload( View view ){
 		
 		try{
-			DbxPath testPath = new DbxPath(DbxPath.ROOT, "monkey2.s00");
+			DbxPath testPath = new DbxPath(DbxPath.ROOT, "savesyncr.txt");
 			String fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-			File tf = new File(fsRoot+File.separator+"ScummVM"+File.separator+"Saves"+File.separator+"monkey2.s00");
+			File tf = new File(fsRoot+File.separator+"savesyncr.txt");
 	
 			// Create DbxFileSystem for synchronized file access.
 			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
