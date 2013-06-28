@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.util.Log;
 
 import com.dropbox.sync.android.DbxAccountManager;
@@ -22,6 +24,9 @@ import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxFileSystem;
 import com.dropbox.sync.android.DbxPath;
 import java.io.*;
+import java.util.*;
+import android.widget.AdapterView.*;
+import android.widget.*;
 
 public class MainActivity extends Activity {
 
@@ -33,6 +38,11 @@ public class MainActivity extends Activity {
 	private TextView mTestOutput;
 	private Button mLinkButton;
 	private DbxAccountManager mDbxAcctMgr;
+	
+	private String fsRoot;
+	private PathStore pStore;
+	
+	public List list;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,14 +58,52 @@ public class MainActivity extends Activity {
 			});
 
 		mDbxAcctMgr = DbxAccountManager.getInstance(getApplicationContext(), appKey, appSecret);
+		
+		fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
+		pStore = new PathStore();
+		
+		// TODO: load this data from external storage
+		pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
+		pStore.Add("monkey2.s01",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
+		
+		try{
+			// Adapter for the file selector spinner
+			list = new ArrayList<String>();
+			for( String key : pStore.filePaths.keySet()) {
+				list.add(key);
+			}
+			
+			ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, list);
+			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+			
+			Spinner fileSpin = (Spinner)findViewById(R.id.filespin);
+			
+			fileSpin.setOnItemSelectedListener(new OnItemSelectedListener(){
+				public void onItemSelected( AdapterView<?> arg0, View arg1, int arg2, long arg3 ){
+					mTestOutput.append(list.get(arg2).toString());
+				}
+				public void onNothingSelected(AdapterView<?> arg0){
+					
+				}
+			});
+			
+			fileSpin.setAdapter(adapter);
+		}catch(Exception e){
+			Log.e("SPINNER ADAPTER", e.getMessage());
+		}
 	}
+	
+//		public Object getItem(int position){
+//			HashMap<String, String> tblItem = listItems.get(position);
+//			return tblItem.get("NAME");
+//		}
+//	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		if (mDbxAcctMgr.hasLinkedAccount()) {
 			showLinkedView();
-			doDropboxTest();
 		} else {
 			showUnlinkedView();
 		}
@@ -79,7 +127,7 @@ public class MainActivity extends Activity {
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_LINK_TO_DBX) {
 			if (resultCode == Activity.RESULT_OK) {
-				doDropboxTest();
+				//TODO: handle dropbox auth result in gui
 			} else {
 				mTestOutput.setText("Link to Dropbox failed or was cancelled.");
 			}
@@ -88,54 +136,6 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	private void doDropboxTest() {
-		try {
-			final String TEST_DATA = "Hello Dropbox";
-			final String TEST_FILE_NAME = "hello_dropbox.txt";
-			DbxPath testPath = new DbxPath(DbxPath.ROOT, TEST_FILE_NAME);
-
-			// Create DbxFileSystem for synchronized file access.
-			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
-
-			// Print the contents of the root folder.  This will block until we can
-			// sync metadata the first time.
-			List<DbxFileInfo> infos = dbxFs.listFolder(DbxPath.ROOT);
-			mTestOutput.setText("\nContents of app folder:\n");
-			for (DbxFileInfo info : infos) {
-				mTestOutput.append("    " + info.path + ", " + info.modifiedTime + '\n');
-			}
-
-			// Create a test file only if it doesn't already exist.
-			if (!dbxFs.exists(testPath)) {
-				DbxFile testFile = dbxFs.create(testPath);
-				try {
-					testFile.writeString(TEST_DATA);
-				} finally {
-					testFile.close();
-				}
-				mTestOutput.append("\nCreated new file '" + testPath + "'.\n");
-			}
-
-			// Read and print the contents of test file.  Since we're not making
-			// any attempt to wait for the latest version, this may print an
-			// older cached version.  Use getSyncStatus() and/or a listener to
-			// check for a new version.
-			if (dbxFs.isFile(testPath)) {
-				String resultData;
-				DbxFile testFile = dbxFs.open(testPath);
-				try {
-					resultData = testFile.readString();
-				} finally {
-					testFile.close();
-				}
-				mTestOutput.append("\nRead file '" + testPath + "' and got data:\n    " + resultData);
-			} else if (dbxFs.isFolder(testPath)) {
-				mTestOutput.append("'" + testPath.toString() + "' is a folder.\n");
-			}
-		} catch (IOException e) {
-			mTestOutput.setText("Dropbox test failed: " + e);
-		}
-	}
 	
 	public void DoUpload(View view){
 		Log.d("testing","step1");
@@ -160,16 +160,14 @@ public class MainActivity extends Activity {
 					mTestOutput.append("    " + info.path + ", " + info.modifiedTime + '\n');
 				}
 	
-				// Create a test file only if it doesn't already exist.
-				if (!dbxFs.exists(testPath)) {
-					DbxFile testFile = dbxFs.create(testPath);
-					try {
-						testFile.writeFromExistingFile(tf,false);
-					} finally {
-						testFile.close();
-					}
-					mTestOutput.append("\nCreated new file '" + testPath + "'.\n");
+				DbxFile testFile = dbxFs.create(testPath);
+				try {
+					testFile.writeFromExistingFile(tf,false);
+				} finally {
+					testFile.close();
 				}
+				mTestOutput.append("\nPosted file to DropBox: " + testPath + ".\n");
+
 			}catch(Exception e){
 				Log.e("ERROR POSTING FILE:",e.getMessage());
 			}
@@ -184,7 +182,7 @@ public class MainActivity extends Activity {
 		try{
 			DbxPath testPath = new DbxPath(DbxPath.ROOT, "monkey2.s00");
 			String fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-			File tf = new File(fsRoot+File.separator+"ScummVM"+File.separator+"Saves"+File.separator+"monkey2b.s00");
+			File tf = new File(fsRoot+File.separator+"ScummVM"+File.separator+"Saves"+File.separator+"monkey2.s00");
 	
 			// Create DbxFileSystem for synchronized file access.
 			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
