@@ -138,49 +138,40 @@ public class MainActivity extends Activity {
 
 	
 	public void DoUpload(View view){
-		Log.d("testing","step1");
-		boolean doUpdate = false;
-		String fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-		File tf = new File(fsRoot+File.separator+"savesyncr.txt");
-		if( tf != null ){
-			//Log.d("directory",getExternalFilesDir(null).toString());
+
+		Spinner fileSpin = (Spinner)findViewById(R.id.filespin);
+		String fileName = fileSpin.getSelectedItem().toString();
+		String localPath = fsRoot+pStore.filePaths.get(fileSpin.getSelectedItem())+fileSpin.getSelectedItem().toString();
+		
+		File tf = new File(localPath);
+		if( tf.exists() ){
+
 			Log.d("upload",tf.getName());
 			Log.d("filesize",String.valueOf(tf.length()));
 			
 			try{
 				DbxPath testPath = new DbxPath(DbxPath.ROOT, tf.getName());
-	
-				// Create DbxFileSystem for synchronized file access.
 				DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
 	
 				// Print the contents of the root folder.  This will block until we can
 				// sync metadata the first time.
-				List<DbxFileInfo> infos = dbxFs.listFolder(DbxPath.ROOT);
-				mTestOutput.setText("\nContents of app folder:\n");
-				for (DbxFileInfo info : infos) {
-					mTestOutput.append("    " + info.path + ", " + info.modifiedTime + '\n');
-				}
+//				List<DbxFileInfo> infos = dbxFs.listFolder(DbxPath.ROOT);
+//				mTestOutput.setText("\nContents of app folder:\n");
+//				for (DbxFileInfo info : infos) {
+//					mTestOutput.append("    " + info.path + ", " + info.modifiedTime + '\n');
+//				}
 				
 				DbxFile testFile;
-				
-				
 				if( dbxFs.exists(testPath) ){
-					Log.d("FILE CHECK3", "OPEN");
-					testFile = dbxFs.open(testPath);
-				}else{
-					Log.d("FILE CHECK3", "CREATE");
-					testFile = dbxFs.create(testPath);
+					Log.d("FILE EXISTS", "Deleting");
+					dbxFs.delete(testPath);
 				}
+				testFile = dbxFs.create(testPath);
+				
 				try {
-					while( !testFile.getSyncStatus().isCached ){
-						Log.d("Loading file to cache",String.valueOf(testFile.getSyncStatus().bytesTransferred));
-						//TODO: add check to break this loop
-					}
 					testFile.writeFromExistingFile(tf,false);
 					while( testFile.getSyncStatus().pending.toString() != "NONE" )
 						Log.d("SYNC STATUS", testFile.getSyncStatus().pending.toString());
-					
-					doUpdate = true;
 
 				} finally {
 					testFile.close();
@@ -191,9 +182,6 @@ public class MainActivity extends Activity {
 				Log.e("ERROR POSTING FILE:",e.getMessage());
 			}
 			
-			if( doUpdate ){
-				DoDownload( view );
-			}
 		}else{
 			Log.d("upload","file not found. error. ready_");
 		}	
@@ -202,10 +190,13 @@ public class MainActivity extends Activity {
 	
 	public void DoDownload( View view ){
 		
+		Spinner fileSpin = (Spinner)findViewById(R.id.filespin);
+		String fileName = fileSpin.getSelectedItem().toString();
+		String localPath = fsRoot+pStore.filePaths.get(fileSpin.getSelectedItem())+fileSpin.getSelectedItem().toString();
+		
 		try{
-			DbxPath testPath = new DbxPath(DbxPath.ROOT, "savesyncr.txt");
-			String fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-			File tf = new File(fsRoot+File.separator+"savesyncr.txt");
+			DbxPath testPath = new DbxPath(DbxPath.ROOT, fileName);
+			File tf = new File(localPath);
 	
 			// Create DbxFileSystem for synchronized file access.
 			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
@@ -223,6 +214,9 @@ public class MainActivity extends Activity {
 						bos.write(b, 0, bytesRead);
 					}
 					byte[] bytes = bos.toByteArray();
+					// Delete local file before writing
+					if( tf.exists() )
+						tf.delete();
 					FileOutputStream fos = new FileOutputStream(tf);
 					fos.write(bytes);
 					fos.close();
@@ -238,6 +232,63 @@ public class MainActivity extends Activity {
 		}catch(Exception e){
 			Log.e("ERROR RETRIEVING FILE:",e.getMessage());
 		}
+	}
+	
+	public void DoSync(View view){
+		
+		Long dbDate = null;
+		Long locDate = null;
+		
+		Spinner fileSpin = (Spinner)findViewById(R.id.filespin);
+		String fileName = fileSpin.getSelectedItem().toString();
+		String localPath = fsRoot+pStore.filePaths.get(fileSpin.getSelectedItem())+fileSpin.getSelectedItem().toString();
+		
+		mTestOutput.append("Checking status of: "+fileName+"\n");
+		mTestOutput.append("Local path: "+localPath+"\n");
+		
+		try{
+			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+			DbxPath testPath = new DbxPath(DbxPath.ROOT, fileName);
+			if( dbxFs.exists(testPath) )
+				dbDate = dbxFs.getFileInfo(testPath).modifiedTime.getTime();
+		}catch(Exception e){
+			Log.e("ERROR RETRIEVING REMOTE FILE:",e.getMessage());
+		}
+		try{
+			File localFile = new File(localPath);
+			if(localFile.exists())
+				locDate = localFile.lastModified();
+		}catch(Exception e){
+			Log.e("ERROR RETRIEVING LOCAL FILE:",e.getMessage());
+		}
+		
+		// Remove this output at some point
+		if(dbDate != null)
+			mTestOutput.append("Remote timestamp: "+dbDate.toString()+"\n");
+		if(locDate != null)
+			mTestOutput.append("Dropbox timestamp: "+locDate.toString()+"\n");
+			
+		// Now we check and do the sync
+		if( dbDate == null && locDate == null ){
+			mTestOutput.append("File does not exist anywhere. Doing Nothing.\n");
+		}else if( dbDate == null ){
+			mTestOutput.append("File does not exist in Dropbox. Upload.\n");
+		}else if( locDate == null ){
+			mTestOutput.append("File does not exist in local. Download.\n");
+		}else{
+			// Do some checking
+			//TODO: WORK IN OFFSET VALUE
+			Long comparison = dbDate-locDate;
+			//mTestOutput.append("Time comparison: "+String.valueOf(comparison));
+			if( comparison > 0 ){
+				mTestOutput.append("Dropbox file newer. Download.\n");
+			}else if( comparison < 0 ){
+				mTestOutput.append("Local file newer. Upload.\n");
+			}else{
+				mTestOutput.append("Files match. Do Nothing");
+			}
+		}
+			
 	}
 
 }
