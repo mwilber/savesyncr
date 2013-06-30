@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.util.Log;
+import android.content.Context;
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxFile;
@@ -32,6 +33,7 @@ public class MainActivity extends Activity {
 
 	private static final String appKey = "908lm07bru67cqc";
 	private static final String appSecret = "e77781n0tunfpqb";
+	private static final String dataStore = "savesyncr.dat";
 
 	private static final int REQUEST_LINK_TO_DBX = 0;
 
@@ -63,8 +65,18 @@ public class MainActivity extends Activity {
 		pStore = new PathStore();
 		
 		// TODO: load this data from external storage
-		pStore.Add("savesyncr.txt",File.separator);
-		pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
+		//pStore.Add("savesyncr.txt",File.separator);
+		//pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
+		ObjectInputStream in = null;
+		try{
+			in = new ObjectInputStream( this.openFileInput(dataStore));
+			pStore.filePaths = (HashMap)in.readObject();
+			in.close();
+		}catch(IOException ex){
+			ex.printStackTrace();
+		}catch(ClassNotFoundException ex){
+			ex.printStackTrace();
+		}
 		
 		try{
 			// Adapter for the file selector spinner
@@ -133,6 +145,22 @@ public class MainActivity extends Activity {
 			}
 		} else {
 			super.onActivityResult(requestCode, resultCode, data);
+		}
+	}
+	
+	
+	public void DoAdd(View view){
+		//pStore.Add("savesyncr.txt",File.separator);
+		pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
+		
+		ObjectOutputStream out = null;
+		try{
+			//out = new ObjectOutputStream(new FileOutputStream(dataStore));
+			out = new ObjectOutputStream(this.openFileOutput(dataStore, Context.MODE_PRIVATE));
+			out.writeObject(pStore.filePaths);
+			out.close();
+		}catch( IOException ex ){
+			ex.printStackTrace();
 		}
 	}
 
@@ -264,9 +292,9 @@ public class MainActivity extends Activity {
 		
 		// Remove this output at some point
 		if(dbDate != null)
-			mTestOutput.append("Remote timestamp: "+dbDate.toString()+"\n");
+			mTestOutput.append("Dropbox timestamp: "+dbDate.toString()+"\n");
 		if(locDate != null)
-			mTestOutput.append("Dropbox timestamp: "+locDate.toString()+"\n");
+			mTestOutput.append("Local timestamp: "+locDate.toString()+"\n");
 			
 		// Now we check and do the sync
 		if( dbDate == null && locDate == null ){

@@ -2,17 +2,18 @@ package com.greenzeta.savesyncr;
 
 import java.util.Map;
 import java.util.*;
+import java.io.Serializable;
 
-public class PathStore
+public class PathStore implements Serializable
 {
-	public HashMap<String, String> filePaths;
+	public HashMap<String, Path> filePaths;
 	
 	public PathStore(){
-		filePaths = new HashMap<String, String>();
+		filePaths = new HashMap<String, Path>();
 	}
 	
 	public void Add(String pKey, String pValue){
-		filePaths.put(pKey, pValue);
+		filePaths.put(pKey, new Path(pKey,pValue,new Long(0)));
 		//filePaths.put("test","test2");
 	}
 	
