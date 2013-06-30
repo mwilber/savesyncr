@@ -31,6 +31,15 @@
         android:id="@+id/test_output"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+    
+    <Button
+        android:id="@+id/clear_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:text="Clear"
+		android:onClick="DoClearMessages"/>
 	
 	<Button
         android:id="@+id/upload_button"

@@ -1,36 +1,39 @@
 package com.greenzeta.savesyncr;
 
-import android.view.Menu;
-
-import java.io.IOException;
-import java.util.List;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-import android.os.Environment;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
-import android.util.Log;
-import android.content.Context;
+import android.widget.TextView;
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxFile;
-import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxFileSystem;
 import com.dropbox.sync.android.DbxPath;
-import java.io.*;
-import java.util.*;
-import android.widget.AdapterView.*;
-import android.widget.*;
 
 public class MainActivity extends Activity {
 
+	public final static String EXTRA_MESSAGE = "com.greenzeta.savesyncr.MESSAGE";
 	private static final String appKey = "908lm07bru67cqc";
 	private static final String appSecret = "e77781n0tunfpqb";
 	private static final String dataStore = "savesyncr.dat";
@@ -49,6 +52,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
 		setContentView(R.layout.activity_main);
 		mTestOutput = (TextView) findViewById(R.id.test_output);
 		mLinkButton = (Button) findViewById(R.id.link_button);
@@ -64,13 +68,10 @@ public class MainActivity extends Activity {
 		fsRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
 		pStore = new PathStore();
 		
-		// TODO: load this data from external storage
-		//pStore.Add("savesyncr.txt",File.separator);
-		//pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
 		ObjectInputStream in = null;
 		try{
 			in = new ObjectInputStream( this.openFileInput(dataStore));
-			pStore.filePaths = (HashMap)in.readObject();
+			pStore.filePaths = (HashMap<String,Path>)in.readObject();
 			in.close();
 		}catch(IOException ex){
 			ex.printStackTrace();
@@ -103,6 +104,19 @@ public class MainActivity extends Activity {
 		}catch(Exception e){
 			Log.e("SPINNER ADAPTER", e.getMessage());
 		}
+		
+		// Get the message from the intent
+	    Intent intent = getIntent();
+	    String message = "";
+	    message = intent.getStringExtra(FileBrowserActivity.FILE_MESSAGE);
+	    try{
+	    	if( message != null )
+	    		Log.d("INTENT", message.toString());
+	    	else
+	    		Log.d("INTENT", "NO INTENT FOUND");
+	    }catch(Exception e){
+	    	Log.d("INTENT", "ERROR");
+	    }
 	}
 	
 //		public Object getItem(int position){
@@ -151,17 +165,82 @@ public class MainActivity extends Activity {
 	
 	public void DoAdd(View view){
 		//pStore.Add("savesyncr.txt",File.separator);
-		pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
+		//pStore.Add("monkey2.s00",File.separator+"ScummVM"+File.separator+"Saves"+File.separator);
+		//SavePathStore();
 		
+		//TODO: Add file browsing target action as intent
+		Intent intent = new Intent(this, FileBrowserActivity.class);
+		//EditText editText = (EditText) findViewById(R.id.edit_message);
+		String message = "local";
+		intent.putExtra(EXTRA_MESSAGE, message);
+		startActivity(intent);
+	}
+	
+	
+	public void DoClearMessages(View view){
+		mTestOutput.setText("");
+	}
+	
+	
+	public boolean SavePathStore(){
 		ObjectOutputStream out = null;
 		try{
 			//out = new ObjectOutputStream(new FileOutputStream(dataStore));
 			out = new ObjectOutputStream(this.openFileOutput(dataStore, Context.MODE_PRIVATE));
 			out.writeObject(pStore.filePaths);
 			out.close();
+			return true;
 		}catch( IOException ex ){
 			ex.printStackTrace();
 		}
+		return false;
+	}
+	
+	
+	public boolean PathUpload( String pPathName ){
+		
+		String fileName = pPathName;
+		String localPath = fsRoot+pStore.GetLocalPath(fileName);
+		Long dbDate = null;
+		Long locDate = null;
+		
+		File localFile = new File(localPath);
+		Log.d("Looking for local file",localPath);
+		if( localFile.exists() ){
+			try{
+				DbxPath dbPath = new DbxPath(DbxPath.ROOT, localFile.getName());
+				DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+				
+				DbxFile dbFile;
+				if( dbxFs.exists(dbPath) ){
+					Log.d("FILE EXISTS", "Deleting");
+					dbxFs.delete(dbPath);
+				}
+				dbFile = dbxFs.create(dbPath);
+				
+				try {
+					dbFile.writeFromExistingFile(localFile,false);
+					while( dbFile.getSyncStatus().pending.toString() != "NONE" )
+						Log.d("SYNC STATUS", dbFile.getSyncStatus().pending.toString());
+					// Update the time offset
+					dbDate = dbxFs.getFileInfo(dbPath).modifiedTime.getTime();
+					locDate = localFile.lastModified();
+					Log.d("saving offset", String.valueOf((dbDate-locDate)));
+					pStore.SetOffset(fileName, (dbDate-locDate));
+					SavePathStore();
+				} finally {
+					dbFile.close();
+				}
+				mTestOutput.append("\nPosted file to DropBox: " + dbPath + ".\n");
+				
+			}catch(Exception e){
+				Log.e("ERROR POSTING FILE:",e.getMessage());
+			}
+		}else{
+			Log.d("PathUpload","file not found. error. ready_");
+		}
+		
+		return true;
 	}
 
 	
@@ -216,6 +295,63 @@ public class MainActivity extends Activity {
 	}
 	
 	
+	public boolean PathDownload( String pPathName ){
+		
+		String fileName = pPathName;
+		String localPath = fsRoot+pStore.GetLocalPath(fileName);
+		Long dbDate = null;
+		Long locDate = null;
+		
+		try{
+
+			DbxPath dbPath = new DbxPath(DbxPath.ROOT, fileName);
+			File localFile = new File(localPath);
+			
+			// Create DbxFileSystem for synchronized file access.
+			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+			
+			if (dbxFs.isFile(dbPath)) {
+				FileInputStream resultData;
+				DbxFile dbFile = dbxFs.open(dbPath);
+				try {
+					resultData = dbFile.getReadStream();
+					
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					byte[] b = new byte[1024];
+					int bytesRead = 0;
+					while ((bytesRead = resultData.read(b)) != -1) {
+						bos.write(b, 0, bytesRead);
+					}
+					byte[] bytes = bos.toByteArray();
+					// Delete local file before writing
+					if( localFile.exists() )
+						localFile.delete();
+					FileOutputStream fos = new FileOutputStream(localFile);
+					fos.write(bytes);
+					fos.close();
+					Log.d("filewrite","File Write Complete!!!");
+					// Update the time offset
+					dbDate = dbxFs.getFileInfo(dbPath).modifiedTime.getTime();
+					locDate = localFile.lastModified();
+					Log.d("saving offset", String.valueOf((dbDate-locDate)));
+					pStore.SetOffset(fileName, (dbDate-locDate));
+					SavePathStore();
+				} finally {
+					dbFile.close();
+				}
+				mTestOutput.append("\nRead file '" + dbPath + "' and got data:\n    " + resultData);
+			} else if (dbxFs.isFolder(dbPath)) {
+				mTestOutput.append("'" + dbPath.toString() + "' is a folder.\n");
+			}
+			
+		}catch(Exception e){
+			Log.e("ERROR POSTING FILE:",e.getMessage());
+		}
+		
+		return true;
+	}
+
+	
 	public void DoDownload( View view ){
 		
 		Spinner fileSpin = (Spinner)findViewById(R.id.filespin);
@@ -264,12 +400,18 @@ public class MainActivity extends Activity {
 	
 	public void DoSync(View view){
 		
+		for( HashMap.Entry entry : pStore.filePaths.entrySet() ){
+			System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue() );
+			PathSync(entry.getKey().toString());
+		}
+	}
+	
+	public void PathSync( String pPathName ){
+		
+		String fileName = pPathName;
+		String localPath = fsRoot+pStore.GetLocalPath(fileName);
 		Long dbDate = null;
 		Long locDate = null;
-		
-		Spinner fileSpin = (Spinner)findViewById(R.id.filespin);
-		String fileName = fileSpin.getSelectedItem().toString();
-		String localPath = fsRoot+pStore.filePaths.get(fileSpin.getSelectedItem())+fileSpin.getSelectedItem().toString();
 		
 		mTestOutput.append("Checking status of: "+fileName+"\n");
 		mTestOutput.append("Local path: "+localPath+"\n");
@@ -301,19 +443,22 @@ public class MainActivity extends Activity {
 			mTestOutput.append("File does not exist anywhere. Doing Nothing.\n");
 		}else if( dbDate == null ){
 			mTestOutput.append("File does not exist in Dropbox. Upload.\n");
+			PathUpload(fileName);
 		}else if( locDate == null ){
 			mTestOutput.append("File does not exist in local. Download.\n");
+			PathDownload(fileName);
 		}else{
 			// Do some checking
-			//TODO: WORK IN OFFSET VALUE
-			Long comparison = dbDate-locDate;
-			//mTestOutput.append("Time comparison: "+String.valueOf(comparison));
+			Long comparison = (dbDate-locDate) - pStore.filePaths.get(fileName).timeoffset;
+			mTestOutput.append("Time offset ("+dbDate+"-"+locDate+") - "+pStore.filePaths.get(fileName).timeoffset+": "+String.valueOf(comparison)+"\n");
 			if( comparison > 0 ){
 				mTestOutput.append("Dropbox file newer. Download.\n");
+				PathDownload(fileName);
 			}else if( comparison < 0 ){
 				mTestOutput.append("Local file newer. Upload.\n");
+				PathUpload(fileName);
 			}else{
-				mTestOutput.append("Files match. Do Nothing");
+				mTestOutput.append("Files match. Do Nothing\n");
 			}
 		}
 			

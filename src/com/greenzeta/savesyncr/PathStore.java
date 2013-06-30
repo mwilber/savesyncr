@@ -17,6 +17,18 @@ public class PathStore implements Serializable
 		//filePaths.put("test","test2");
 	}
 	
+	public String GetLocalPath(String pKey){
+		
+		Path tmpPath = this.filePaths.get(pKey);
+		
+		return tmpPath.localpath+tmpPath.name;
+	}
+	
+	public boolean SetOffset(String pKey, Long pOffset){
+		this.filePaths.get(pKey).timeoffset = pOffset;
+		return true;
+	}
+	
 	public void Loop(){
 		for( Map.Entry entry : filePaths.entrySet() ){
 			System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue() );
