@@ -21,7 +21,7 @@ public class PathStore implements Serializable
 		
 		Path tmpPath = this.filePaths.get(pKey);
 		
-		return tmpPath.localpath+tmpPath.name;
+		return tmpPath.localpath;
 	}
 	
 	public boolean SetOffset(String pKey, Long pOffset){

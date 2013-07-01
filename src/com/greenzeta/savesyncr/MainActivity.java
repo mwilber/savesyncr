@@ -110,10 +110,12 @@ public class MainActivity extends Activity {
 	    String message = "";
 	    message = intent.getStringExtra(FileBrowserActivity.FILE_MESSAGE);
 	    try{
-	    	if( message != null )
+	    	if( message != null ){
 	    		Log.d("INTENT", message.toString());
-	    	else
+					AddPath(message.toString());
+	    	}else{
 	    		Log.d("INTENT", "NO INTENT FOUND");
+				}
 	    }catch(Exception e){
 	    	Log.d("INTENT", "ERROR");
 	    }
@@ -182,6 +184,16 @@ public class MainActivity extends Activity {
 	}
 	
 	
+	public boolean AddPath(String pPath){
+			File tmpFile = new File(pPath);
+			if( tmpFile.exists() ){
+					pStore.Add(tmpFile.getName(), tmpFile.getPath());
+					SavePathStore();
+			}
+			return true;
+	}
+	
+	
 	public boolean SavePathStore(){
 		ObjectOutputStream out = null;
 		try{
@@ -200,7 +212,7 @@ public class MainActivity extends Activity {
 	public boolean PathUpload( String pPathName ){
 		
 		String fileName = pPathName;
-		String localPath = fsRoot+pStore.GetLocalPath(fileName);
+		String localPath = pStore.GetLocalPath(fileName);
 		Long dbDate = null;
 		Long locDate = null;
 		
@@ -298,7 +310,7 @@ public class MainActivity extends Activity {
 	public boolean PathDownload( String pPathName ){
 		
 		String fileName = pPathName;
-		String localPath = fsRoot+pStore.GetLocalPath(fileName);
+		String localPath = pStore.GetLocalPath(fileName);
 		Long dbDate = null;
 		Long locDate = null;
 		
@@ -314,6 +326,11 @@ public class MainActivity extends Activity {
 				FileInputStream resultData;
 				DbxFile dbFile = dbxFs.open(dbPath);
 				try {
+					
+					// Wait for file sync
+					while( dbFile.getSyncStatus().pending.toString() != "NONE" )
+							Log.d("SYNC STATUS", dbFile.getSyncStatus().pending.toString());
+					
 					resultData = dbFile.getReadStream();
 					
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -409,7 +426,7 @@ public class MainActivity extends Activity {
 	public void PathSync( String pPathName ){
 		
 		String fileName = pPathName;
-		String localPath = fsRoot+pStore.GetLocalPath(fileName);
+		String localPath = pStore.GetLocalPath(fileName);
 		Long dbDate = null;
 		Long locDate = null;
 		

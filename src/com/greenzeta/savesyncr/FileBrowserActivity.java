@@ -109,17 +109,16 @@ public class FileBrowserActivity extends ListActivity {
 	     .setTitle("[" + file.getName() + "] folder can't be read!")
 	     .setPositiveButton("OK", null).show(); 
 	   } 
-	  }else {
-	   new AlertDialog.Builder(this)
-	     .setIcon(R.drawable.ic_launcher)
-	     .setTitle("[" + file.getPath() + "]")
-	     .setPositiveButton("OK", null).show();
-
-	    }
-	  Intent intent = new Intent(this, MainActivity.class);
-		//EditText editText = (EditText) findViewById(R.id.edit_message);
-		intent.putExtra(FILE_MESSAGE, file.getPath());
-		startActivity(intent);
+		}else {
+			new AlertDialog.Builder(this)
+				.setIcon(R.drawable.ic_launcher)
+	     	.setTitle("[" + file.getPath() + "]")
+	     	.setPositiveButton("OK", null).show();
+			Intent intent = new Intent(this, MainActivity.class);
+			intent.putExtra(FILE_MESSAGE, file.getPath());
+			startActivity(intent);	
+		}
+	  
 	 }
 
 	}
