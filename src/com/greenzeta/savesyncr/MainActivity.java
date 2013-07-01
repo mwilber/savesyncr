@@ -225,15 +225,16 @@ public class MainActivity extends Activity {
 				
 				DbxFile dbFile;
 				if( dbxFs.exists(dbPath) ){
-					Log.d("FILE EXISTS", "Deleting");
+					Log.d("REMOTE FILE EXISTS", "Deleting");
 					dbxFs.delete(dbPath);
 				}
 				dbFile = dbxFs.create(dbPath);
 				
 				try {
 					dbFile.writeFromExistingFile(localFile,false);
-					while( dbFile.getSyncStatus().pending.toString() != "NONE" )
-						Log.d("SYNC STATUS", dbFile.getSyncStatus().pending.toString());
+					while( dbFile.getSyncStatus().pending.toString() != "NONE" ){
+						//Log.d("ULSYNC STATUS", dbFile.getSyncStatus().pending.toString());
+					}
 					// Update the time offset
 					dbDate = dbxFs.getFileInfo(dbPath).modifiedTime.getTime();
 					locDate = localFile.lastModified();
@@ -289,8 +290,9 @@ public class MainActivity extends Activity {
 				
 				try {
 					testFile.writeFromExistingFile(tf,false);
-					while( testFile.getSyncStatus().pending.toString() != "NONE" )
-						Log.d("SYNC STATUS", testFile.getSyncStatus().pending.toString());
+					while( testFile.getSyncStatus().pending.toString() != "NONE" ){
+						//Log.d("ULSYNC STATUS", testFile.getSyncStatus().pending.toString());
+					}
 
 				} finally {
 					testFile.close();
@@ -341,8 +343,10 @@ public class MainActivity extends Activity {
 					}
 					byte[] bytes = bos.toByteArray();
 					// Delete local file before writing
-					if( localFile.exists() )
+					if( localFile.exists() ){
+						Log.d("LOCAL FILE EXISTS", "Deleting");
 						localFile.delete();
+					}
 					FileOutputStream fos = new FileOutputStream(localFile);
 					fos.write(bytes);
 					fos.close();
@@ -417,6 +421,15 @@ public class MainActivity extends Activity {
 	
 	public void DoSync(View view){
 		
+		try{
+			// Create DbxFileSystem for synchronized file access.
+			//DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+			// Big problems with this function.
+			//dbxFs.syncNowAndWait();
+		}catch(Exception e){
+			Log.e("ERROR RETRIEVING DB DATA:",e.getMessage());
+		}
+		
 		for( HashMap.Entry entry : pStore.filePaths.entrySet() ){
 			System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue() );
 			PathSync(entry.getKey().toString());
@@ -435,18 +448,42 @@ public class MainActivity extends Activity {
 		
 		try{
 			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
-			DbxPath testPath = new DbxPath(DbxPath.ROOT, fileName);
-			if( dbxFs.exists(testPath) )
-				dbDate = dbxFs.getFileInfo(testPath).modifiedTime.getTime();
+			Log.d("Sync Looking on DB",fileName);
+			DbxPath dbPath = new DbxPath(DbxPath.ROOT, fileName);
+			if( dbxFs.exists(dbPath) ){
+				Log.e("REMOTE FILE FOUND",fileName);
+				//First check for a newer version in the cloud
+				//DbxFileStatus getNewerStatus()
+				DbxFile dbFile = dbxFs.open(dbPath);
+				try{
+					Log.e("REMOTE CHECKING NEWER STATUS",fileName);
+					if( dbFile.getNewerStatus() != null ){
+						Log.e("REMOTE NEWER STATUS != NULL",fileName);
+						while( dbFile.getNewerStatus().pending.toString() != "NONE" ){
+							Log.d("SYNC STATUS", dbFile.getNewerStatus().pending.toString());
+						}
+					}
+					Log.e("REMOTE UPDATE CACHE",fileName);
+					dbFile.update();
+					Log.e("REMOTE CHECKING DATE",fileName);
+					dbDate = dbFile.getInfo().modifiedTime.getTime();
+				}catch(Exception e){
+					Log.e("ERROR RETRIEVING REMOTE FILE:","");
+				} finally {
+					dbFile.close();
+				}
+			}else{
+				Log.e("REMOTE FILE NOT FOUND",fileName);
+			}
 		}catch(Exception e){
-			Log.e("ERROR RETRIEVING REMOTE FILE:",e.getMessage());
+			Log.e("ERROR RETRIEVING REMOTE FILE:","");
 		}
 		try{
 			File localFile = new File(localPath);
 			if(localFile.exists())
 				locDate = localFile.lastModified();
 		}catch(Exception e){
-			Log.e("ERROR RETRIEVING LOCAL FILE:",e.getMessage());
+			Log.e("ERROR RETRIEVING LOCAL FILE:","");
 		}
 		
 		// Remove this output at some point
