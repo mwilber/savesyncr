@@ -456,16 +456,24 @@ public class MainActivity extends Activity {
 				//DbxFileStatus getNewerStatus()
 				DbxFile dbFile = dbxFs.open(dbPath);
 				try{
-					Log.e("REMOTE CHECKING NEWER STATUS",fileName);
+					Log.e("REMOTE CHECKING NEWER STATUS",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
 					if( dbFile.getNewerStatus() != null ){
-						Log.e("REMOTE NEWER STATUS != NULL",fileName);
+						Log.e("REMOTE NEWER STATUS != NULL",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
 						while( dbFile.getNewerStatus().pending.toString() != "NONE" ){
 							Log.d("SYNC STATUS", dbFile.getNewerStatus().pending.toString());
 						}
 					}
-					Log.e("REMOTE UPDATE CACHE",fileName);
+					Log.e("REMOTE UPDATE CACHE",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
 					dbFile.update();
-					Log.e("REMOTE CHECKING DATE",fileName);
+//					Thread.sleep(30000);
+//					Log.e("REMOTE CHECKING NEWER STATUS",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
+//					if( dbFile.getNewerStatus() != null ){
+//						Log.e("REMOTE NEWER STATUS != NULL",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
+//						while( dbFile.getNewerStatus().pending.toString() != "NONE" ){
+//							Log.d("SYNC STATUS", dbFile.getNewerStatus().pending.toString());
+//						}
+//					}
+					Log.e("REMOTE CHECKING DATE",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
 					dbDate = dbFile.getInfo().modifiedTime.getTime();
 				}catch(Exception e){
 					Log.e("ERROR RETRIEVING REMOTE FILE:","");
