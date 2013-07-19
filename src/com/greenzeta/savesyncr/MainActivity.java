@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import android.app.Activity;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxFile;
+import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxFileSystem;
 import com.dropbox.sync.android.DbxPath;
 
@@ -72,6 +74,7 @@ public class MainActivity extends Activity {
 		try{
 			in = new ObjectInputStream( this.openFileInput(dataStore));
 			pStore.filePaths = (HashMap<String,Path>)in.readObject();
+			Log.d("STORED HASH", pStore.filePaths.toString());
 			in.close();
 		}catch(IOException ex){
 			ex.printStackTrace();
@@ -105,7 +108,7 @@ public class MainActivity extends Activity {
 			Log.e("SPINNER ADAPTER", e.getMessage());
 		}
 		
-		// Get the message from the intent
+		// Get the message from the fileintent
 	    Intent intent = getIntent();
 	    String message = "";
 	    message = intent.getStringExtra(FileBrowserActivity.FILE_MESSAGE);
@@ -119,13 +122,22 @@ public class MainActivity extends Activity {
 	    }catch(Exception e){
 	    	Log.d("INTENT", "ERROR");
 	    }
+	    
+	    // Get the message from the folderintent
+	    message = "";
+	    message = intent.getStringExtra(FolderBrowserActivity.FOLDER_MESSAGE);
+	    try{
+	    	if( message != null ){
+	    		Log.d("INTENT", message.toString());
+					AddPath(message.toString());
+	    	}else{
+	    		Log.d("INTENT", "NO INTENT FOUND");
+				}
+	    }catch(Exception e){
+	    	Log.d("INTENT", "ERROR");
+	    }
 	}
-	
-//		public Object getItem(int position){
-//			HashMap<String, String> tblItem = listItems.get(position);
-//			return tblItem.get("NAME");
-//		}
-//	}
+
 
 	@Override
 	protected void onResume() {
@@ -179,6 +191,31 @@ public class MainActivity extends Activity {
 	}
 	
 	
+	public void DoAddRemote(View view){
+
+		String message = "";
+		
+		try{
+			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+			List<DbxFileInfo> rList = dbxFs.listFolder(DbxPath.ROOT);
+			
+			Iterator<DbxFileInfo> iterator = rList.iterator();
+			while (iterator.hasNext()) {
+				//Log.d("Remote List",iterator.next().path.getName());
+				if(message!="")message+=";";
+				message+=iterator.next().path.getName();
+			}
+			
+		}catch(Exception e){
+			Log.e("ERROR RETRIEVING FILES:",e.getMessage());
+		}
+		Intent intent = new Intent(this, FolderBrowserActivity.class);
+		//EditText editText = (EditText) findViewById(R.id.edit_message);
+		intent.putExtra(EXTRA_MESSAGE, message);
+		startActivity(intent);
+	}
+	
+	
 	public void DoClearMessages(View view){
 		mTestOutput.setText("");
 	}
@@ -186,10 +223,10 @@ public class MainActivity extends Activity {
 	
 	public boolean AddPath(String pPath){
 			File tmpFile = new File(pPath);
-			if( tmpFile.exists() ){
+			//if( tmpFile.exists() ){
 					pStore.Add(tmpFile.getName(), tmpFile.getPath());
 					SavePathStore();
-			}
+			//}
 			return true;
 	}
 	

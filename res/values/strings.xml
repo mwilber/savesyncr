@@ -6,5 +6,6 @@
     <string name="hello_world">Hello world!</string>
     <string name="link_button">Link to Dropbox</string>
     <string name="title_activity_file_browser">FileBrowserActivity</string>
+    <string name="title_activity_folder_browser">FolderBrowserActivity</string>
 
 </resources>

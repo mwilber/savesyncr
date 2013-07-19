@@ -50,6 +50,10 @@
             android:name="com.greenzeta.savesyncr.FileBrowserActivity"
             android:label="@string/title_activity_file_browser" >
         </activity>
+        <activity
+            android:name="com.greenzeta.savesyncr.FolderBrowserActivity"
+            android:label="@string/title_activity_folder_browser" >
+        </activity>
     </application>
 
 </manifest>
