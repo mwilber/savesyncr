@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:padding="7dp"
+    style="@style/PathListItem"
+    >
+    <ImageView android:id="@+id/icon"
+	 android:layout_width="25dp"
+	 android:layout_height="25dp"
+     android:layout_alignParentLeft="true"
+     android:src="@android:drawable/ic_menu_save"
+     android:layout_alignParentEnd="false"
+     android:layout_marginRight="2dp"/>
+	<TextView  
+		android:id="@+id/txtAlertText"
+		style="@style/PathListHead"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content" 
+	    android:layout_toRightOf="@id/icon" 
+	    android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Name"/>
+    <TextView
+		android:id="@+id/txtAlertDate"
+		style="@style/PathListCopy"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content" 
+	    android:layout_below="@id/txtAlertText"
+	    android:layout_toRightOf="@id/icon"
+        android:text="/local/path.txt"/>
+
+    <ImageButton
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:id="@+id/pathUpload"
+            android:layout_alignParentTop="true"
+            android:layout_alignRight="@+id/txtAlertText"
+            android:layout_marginRight="29dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            />
+
+    <ImageButton
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:id="@+id/pathDownload"
+            android:layout_alignParentTop="true"
+            android:layout_alignRight="@+id/pathUpload"
+            android:layout_marginRight="29dp"
+            android:src="@android:drawable/ic_menu_rotate"
+            />
+
+    <ImageButton
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:id="@+id/pathRemove"
+            android:layout_alignParentTop="true"
+            android:layout_alignRight="@+id/pathDownload"
+            android:layout_marginRight="29dp"
+            android:src="@android:drawable/ic_menu_upload"
+            />
+</RelativeLayout>
