@@ -11,6 +11,11 @@ public class PathStore implements Serializable
 	public PathStore(){
 		filePaths = new HashMap<String, Path>();
 	}
+
+    public List ToList(){
+        List<Path> list = new ArrayList<Path>(filePaths.values());
+        return list;
+    }
 	
 	public void Add(String pKey, String pValue){
 		filePaths.put(pKey, new Path(pKey,pValue,new Long(0)));

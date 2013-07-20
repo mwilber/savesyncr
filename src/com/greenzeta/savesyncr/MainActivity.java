@@ -1,17 +1,5 @@
 package com.greenzeta.savesyncr;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -26,12 +14,26 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.ListView;
+import android.widget.LinearLayout;
 
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxFile;
 import com.dropbox.sync.android.DbxFileInfo;
 import com.dropbox.sync.android.DbxFileSystem;
 import com.dropbox.sync.android.DbxPath;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 public class MainActivity extends Activity {
 
@@ -45,11 +47,13 @@ public class MainActivity extends Activity {
 	private TextView mTestOutput;
 	private Button mLinkButton;
 	private DbxAccountManager mDbxAcctMgr;
+    private ListView mList;
 	
 	private String fsRoot;
 	private PathStore pStore;
 	
 	public List list;
+    public PathAdapter pathAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +68,7 @@ public class MainActivity extends Activity {
 					onClickLinkToDropbox();
 				}
 			});
+        mList = (ListView) findViewById(R.id.pathList);
 
 		mDbxAcctMgr = DbxAccountManager.getInstance(getApplicationContext(), appKey, appSecret);
 		
@@ -76,6 +81,7 @@ public class MainActivity extends Activity {
 			pStore.filePaths = (HashMap<String,Path>)in.readObject();
 			Log.d("STORED HASH", pStore.filePaths.toString());
 			in.close();
+
 		}catch(IOException ex){
 			ex.printStackTrace();
 		}catch(ClassNotFoundException ex){
@@ -107,6 +113,13 @@ public class MainActivity extends Activity {
 		}catch(Exception e){
 			Log.e("SPINNER ADAPTER", e.getMessage());
 		}
+
+        try{
+            // Update the listview
+            mList.setAdapter(new PathAdapter(this, R.layout.path_list,pStore.ToList()));
+        }catch(Exception e){
+            Log.e("LISTVIEW ADAPTER", e.getMessage());
+        }
 		
 		// Get the message from the fileintent
 	    Intent intent = getIntent();
