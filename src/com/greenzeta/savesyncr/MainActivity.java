@@ -6,12 +6,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ListView;
@@ -188,6 +192,15 @@ public class MainActivity extends Activity {
 			super.onActivityResult(requestCode, resultCode, data);
 		}
 	}
+
+
+    public void RemovePath(String pIdx){
+        Log.d("MainActivity", "remove: " + pIdx);
+        Log.d("RemovePath","Removing");
+        pStore.Remove(pIdx);
+        Log.d("RemovePath","Saving");
+        SavePathStore();
+    }
 	
 	
 	public void DoAdd(View view){
@@ -237,8 +250,10 @@ public class MainActivity extends Activity {
 	public boolean AddPath(String pPath){
 			File tmpFile = new File(pPath);
 			//if( tmpFile.exists() ){
-					pStore.Add(tmpFile.getName(), tmpFile.getPath());
-					SavePathStore();
+                Log.d("AddPath","Adding");
+			    pStore.Add(tmpFile.getName(), tmpFile.getPath());
+                Log.d("AddPath","Saving");
+				SavePathStore();
 			//}
 			return true;
 	}
@@ -251,10 +266,24 @@ public class MainActivity extends Activity {
 			out = new ObjectOutputStream(this.openFileOutput(dataStore, Context.MODE_PRIVATE));
 			out.writeObject(pStore.filePaths);
 			out.close();
+
+            Log.d("SavePathStore","Clearing");
+            PathAdapter pa = (PathAdapter)mList.getAdapter();
+            pa.clear();
+            for(Path key: pStore.filePaths.values()){
+                Log.d("SavePathStore","Adding: "+key.name);
+                pa.add(key);
+            }
+            Log.d("SavePathStore","Notify");
+            pa.notifyDataSetChanged();
+
 			return true;
 		}catch( IOException ex ){
 			ex.printStackTrace();
+        }catch( Exception ex ){
+            ex.printStackTrace();
 		}
+
 		return false;
 	}
 	
@@ -575,5 +604,80 @@ public class MainActivity extends Activity {
 		}
 			
 	}
+
+    public class PathAdapter extends ArrayAdapter<Path> {
+
+        int resource;
+        String response;
+        Context context;
+        private final static String TAG = "PathAdapter";
+
+        //Initialize adapter
+        public PathAdapter(Context context, int resource, List<Path> items) {
+            super(context, resource, items);
+            this.resource=resource;
+
+        }
+
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
+            View view;
+            TextView textTitle;
+            TextView textTimer;
+            final ImageView image;
+
+            LinearLayout alertView;
+            //Get the current alert object
+            final Path al = getItem(position);
+
+            //Inflate the view
+            if(convertView==null)
+            {
+                Log.d("VIEW","isnull");
+                alertView = new LinearLayout(getContext());
+                Log.d("VIEW","inflater");
+                String inflater = Context.LAYOUT_INFLATER_SERVICE;
+                LayoutInflater vi;
+                Log.d("VIEW","LayoutInflater");
+                vi = (LayoutInflater)getContext().getSystemService(inflater);
+                Log.d("VIEW","inflate");
+                vi.inflate(resource, alertView, true);
+            }
+            else
+            {
+                Log.d("VIEW","not null");
+                alertView = (LinearLayout) convertView;
+            }
+
+            //Get the text boxes from the listitem.xml file
+            TextView alertText =(TextView)alertView.findViewById(R.id.txtAlertText);
+            TextView alertDate =(TextView)alertView.findViewById(R.id.txtAlertDate);
+            ImageButton btnRemove = (ImageButton)alertView.findViewById(R.id.pathRemove);
+
+            //Assign the appropriate data from our alert object above
+            alertText.setText(al.name);
+            alertDate.setText(al.localpath);
+
+            btnRemove.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "string: " + al.name);
+                    PathAdapter.this.RemovePath(al.name);
+
+                    //Toast.makeText(context, "button clicked: " + al.name, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            return alertView;
+        }
+
+        public void RemovePath(String pIdx){
+            Log.d(TAG, "remove: " + pIdx);
+            MainActivity.this.RemovePath(pIdx);
+        }
+
+    }
 
 }

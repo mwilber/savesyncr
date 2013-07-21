@@ -35,9 +35,9 @@
             android:layout_height="35dp"
             android:id="@+id/pathUpload"
             android:layout_alignParentTop="true"
-            android:layout_alignRight="@+id/txtAlertText"
+            android:layout_alignRight="@+id/pathDownload"
             android:layout_marginRight="29dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:src="@android:drawable/ic_menu_upload"
             />
 
     <ImageButton
@@ -45,7 +45,7 @@
             android:layout_height="35dp"
             android:id="@+id/pathDownload"
             android:layout_alignParentTop="true"
-            android:layout_alignRight="@+id/pathUpload"
+            android:layout_alignRight="@+id/pathRemove"
             android:layout_marginRight="29dp"
             android:src="@android:drawable/ic_menu_rotate"
             />
@@ -55,8 +55,8 @@
             android:layout_height="35dp"
             android:id="@+id/pathRemove"
             android:layout_alignParentTop="true"
-            android:layout_alignRight="@+id/pathDownload"
+            android:layout_alignRight="@+id/txtAlertText"
             android:layout_marginRight="29dp"
-            android:src="@android:drawable/ic_menu_upload"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
             />
 </RelativeLayout>

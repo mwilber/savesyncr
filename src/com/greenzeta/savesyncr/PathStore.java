@@ -1,5 +1,7 @@
 package com.greenzeta.savesyncr;
 
+import android.util.Log;
+
 import java.util.Map;
 import java.util.*;
 import java.io.Serializable;
@@ -21,6 +23,16 @@ public class PathStore implements Serializable
 		filePaths.put(pKey, new Path(pKey,pValue,new Long(0)));
 		//filePaths.put("test","test2");
 	}
+
+    public void Remove(String pIdx){
+        for(String key: filePaths.keySet()){
+            Log.d("PathStore","testing: "+pIdx+"="+key);
+            if(pIdx.equals(key)){
+                filePaths.remove(key);
+                break;
+            }
+        }
+    }
 	
 	public String GetLocalPath(String pKey){
 		
