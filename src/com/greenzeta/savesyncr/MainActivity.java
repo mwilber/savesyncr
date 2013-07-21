@@ -497,54 +497,48 @@ public class MainActivity extends Activity {
 			Log.e("ERROR RETRIEVING FILE:",e.getMessage());
 		}
 	}
+
+    public void DoSync(View view){
+        startService(new Intent(SyncService.class.getName()));
+    }
 	
-	public void DoSync(View view){
-		
-		try{
-			// Create DbxFileSystem for synchronized file access.
-			//DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
-			// Big problems with this function.
-			//dbxFs.syncNowAndWait();
-		}catch(Exception e){
-			Log.e("ERROR RETRIEVING DB DATA:",e.getMessage());
-		}
-		
-		for( HashMap.Entry entry : pStore.filePaths.entrySet() ){
-			System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue() );
-			PathSync(entry.getKey().toString());
-		}
-	}
+//	public void DoSyncOld(View view){
+//
+//		try{
+//			// Create DbxFileSystem for synchronized file access.
+//			//DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+//			// Big problems with this function.
+//			//dbxFs.syncNowAndWait();
+//		}catch(Exception e){
+//			Log.e("ERROR RETRIEVING DB DATA:",e.getMessage());
+//		}
+//
+//		for( HashMap.Entry entry : pStore.filePaths.entrySet() ){
+//			System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue() );
+//			PathSync(entry.getKey().toString());
+//		}
+//	}
 	
-	public void PathSync( String pPathName ){
-		
-		String fileName = pPathName;
-		String localPath = pStore.GetLocalPath(fileName);
-		Long dbDate = null;
-		Long locDate = null;
-		
-		mTestOutput.append("Checking status of: "+fileName+"\n");
-		mTestOutput.append("Local path: "+localPath+"\n");
-		
-		try{
-			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
-			Log.d("Sync Looking on DB",fileName);
-			DbxPath dbPath = new DbxPath(DbxPath.ROOT, fileName);
-			if( dbxFs.exists(dbPath) ){
-				Log.e("REMOTE FILE FOUND",fileName);
-				//First check for a newer version in the cloud
-				//DbxFileStatus getNewerStatus()
-				DbxFile dbFile = dbxFs.open(dbPath);
-				try{
-					Log.e("REMOTE CHECKING NEWER STATUS",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
-					if( dbFile.getNewerStatus() != null ){
-						Log.e("REMOTE NEWER STATUS != NULL",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
-						while( dbFile.getNewerStatus().pending.toString() != "NONE" ){
-							Log.d("SYNC STATUS", dbFile.getNewerStatus().pending.toString());
-						}
-					}
-					Log.e("REMOTE UPDATE CACHE",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
-					dbFile.update();
-//					Thread.sleep(30000);
+//	public void PathSync( String pPathName ){
+//
+//		String fileName = pPathName;
+//		String localPath = pStore.GetLocalPath(fileName);
+//		Long dbDate = null;
+//		Long locDate = null;
+//
+//		mTestOutput.append("Checking status of: "+fileName+"\n");
+//		mTestOutput.append("Local path: "+localPath+"\n");
+//
+//		try{
+//			DbxFileSystem dbxFs = DbxFileSystem.forAccount(mDbxAcctMgr.getLinkedAccount());
+//			Log.d("Sync Looking on DB",fileName);
+//			DbxPath dbPath = new DbxPath(DbxPath.ROOT, fileName);
+//			if( dbxFs.exists(dbPath) ){
+//				Log.e("REMOTE FILE FOUND",fileName);
+//				//First check for a newer version in the cloud
+//				//DbxFileStatus getNewerStatus()
+//				DbxFile dbFile = dbxFs.open(dbPath);
+//				try{
 //					Log.e("REMOTE CHECKING NEWER STATUS",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
 //					if( dbFile.getNewerStatus() != null ){
 //						Log.e("REMOTE NEWER STATUS != NULL",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
@@ -552,58 +546,68 @@ public class MainActivity extends Activity {
 //							Log.d("SYNC STATUS", dbFile.getNewerStatus().pending.toString());
 //						}
 //					}
-					Log.e("REMOTE CHECKING DATE",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
-					dbDate = dbFile.getInfo().modifiedTime.getTime();
-				}catch(Exception e){
-					Log.e("ERROR RETRIEVING REMOTE FILE:","");
-				} finally {
-					dbFile.close();
-				}
-			}else{
-				Log.e("REMOTE FILE NOT FOUND",fileName);
-			}
-		}catch(Exception e){
-			Log.e("ERROR RETRIEVING REMOTE FILE:","");
-		}
-		try{
-			File localFile = new File(localPath);
-			if(localFile.exists())
-				locDate = localFile.lastModified();
-		}catch(Exception e){
-			Log.e("ERROR RETRIEVING LOCAL FILE:","");
-		}
-		
-		// Remove this output at some point
-		if(dbDate != null)
-			mTestOutput.append("Dropbox timestamp: "+dbDate.toString()+"\n");
-		if(locDate != null)
-			mTestOutput.append("Local timestamp: "+locDate.toString()+"\n");
-			
-		// Now we check and do the sync
-		if( dbDate == null && locDate == null ){
-			mTestOutput.append("File does not exist anywhere. Doing Nothing.\n");
-		}else if( dbDate == null ){
-			mTestOutput.append("File does not exist in Dropbox. Upload.\n");
-			PathUpload(fileName);
-		}else if( locDate == null ){
-			mTestOutput.append("File does not exist in local. Download.\n");
-			PathDownload(fileName);
-		}else{
-			// Do some checking
-			Long comparison = (dbDate-locDate) - pStore.filePaths.get(fileName).timeoffset;
-			mTestOutput.append("Time offset ("+dbDate+"-"+locDate+") - "+pStore.filePaths.get(fileName).timeoffset+": "+String.valueOf(comparison)+"\n");
-			if( comparison > 0 ){
-				mTestOutput.append("Dropbox file newer. Download.\n");
-				PathDownload(fileName);
-			}else if( comparison < 0 ){
-				mTestOutput.append("Local file newer. Upload.\n");
-				PathUpload(fileName);
-			}else{
-				mTestOutput.append("Files match. Do Nothing\n");
-			}
-		}
-			
-	}
+//					Log.e("REMOTE UPDATE CACHE",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
+//					dbFile.update();
+////					Thread.sleep(30000);
+////					Log.e("REMOTE CHECKING NEWER STATUS",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
+////					if( dbFile.getNewerStatus() != null ){
+////						Log.e("REMOTE NEWER STATUS != NULL",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
+////						while( dbFile.getNewerStatus().pending.toString() != "NONE" ){
+////							Log.d("SYNC STATUS", dbFile.getNewerStatus().pending.toString());
+////						}
+////					}
+//					Log.e("REMOTE CHECKING DATE",fileName+":"+String.valueOf(dbFile.getInfo().modifiedTime.getTime()));
+//					dbDate = dbFile.getInfo().modifiedTime.getTime();
+//				}catch(Exception e){
+//					Log.e("ERROR RETRIEVING REMOTE FILE:","");
+//				} finally {
+//					dbFile.close();
+//				}
+//			}else{
+//				Log.e("REMOTE FILE NOT FOUND",fileName);
+//			}
+//		}catch(Exception e){
+//			Log.e("ERROR RETRIEVING REMOTE FILE:","");
+//		}
+//		try{
+//			File localFile = new File(localPath);
+//			if(localFile.exists())
+//				locDate = localFile.lastModified();
+//		}catch(Exception e){
+//			Log.e("ERROR RETRIEVING LOCAL FILE:","");
+//		}
+//
+//		// Remove this output at some point
+//		if(dbDate != null)
+//			mTestOutput.append("Dropbox timestamp: "+dbDate.toString()+"\n");
+//		if(locDate != null)
+//			mTestOutput.append("Local timestamp: "+locDate.toString()+"\n");
+//
+//		// Now we check and do the sync
+//		if( dbDate == null && locDate == null ){
+//			mTestOutput.append("File does not exist anywhere. Doing Nothing.\n");
+//		}else if( dbDate == null ){
+//			mTestOutput.append("File does not exist in Dropbox. Upload.\n");
+//			PathUpload(fileName);
+//		}else if( locDate == null ){
+//			mTestOutput.append("File does not exist in local. Download.\n");
+//			PathDownload(fileName);
+//		}else{
+//			// Do some checking
+//			Long comparison = (dbDate-locDate) - pStore.filePaths.get(fileName).timeoffset;
+//			mTestOutput.append("Time offset ("+dbDate+"-"+locDate+") - "+pStore.filePaths.get(fileName).timeoffset+": "+String.valueOf(comparison)+"\n");
+//			if( comparison > 0 ){
+//				mTestOutput.append("Dropbox file newer. Download.\n");
+//				PathDownload(fileName);
+//			}else if( comparison < 0 ){
+//				mTestOutput.append("Local file newer. Upload.\n");
+//				PathUpload(fileName);
+//			}else{
+//				mTestOutput.append("Files match. Do Nothing\n");
+//			}
+//		}
+//
+//	}
 
     public class PathAdapter extends ArrayAdapter<Path> {
 

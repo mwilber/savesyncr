@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -54,6 +55,22 @@
             android:name="com.greenzeta.savesyncr.FolderBrowserActivity"
             android:label="@string/title_activity_folder_browser" >
         </activity>
+        <service
+                android:name=".SyncService"
+                android:process=":remote">
+            <intent-filter>
+                <action
+                        android:name="com.greenzeta.savesyncr.SyncService" />
+            </intent-filter>
+        </service>
+        <receiver
+                android:name=".BootReceiver">
+            <intent-filter>
+                <action
+                        android:name="android.intent.action.BOOT_COMPLETED">
+                </action>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
