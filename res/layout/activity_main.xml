@@ -9,7 +9,81 @@
 	android:orientation="vertical"
     tools:context=".MainActivity" >
 
+    <TextView
+            android:id="@+id/app_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_version"
+            android:layout_gravity="right"/>
+
     <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+        <Button
+            android:id="@+id/clear_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:text="X"
+            android:onClick="DoClearMessages"
+            android:visibility="gone"/>
+
+        <Button
+android:id="@+id/add_button"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:gravity="center"
+android:layout_gravity="center"
+android:text="Add Local"
+            android:onClick="DoAdd"
+            android:textSize="12dp"/>
+
+        <Button
+            android:id="@+id/add_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:text="Add Remote"
+            android:onClick="DoAddRemote"
+            android:textSize="12dp"/>
+
+        <Button
+            android:id="@+id/upload_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:text="UL"
+            android:onClick="DoUpload"
+            android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/sync_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:text="Sync"
+            android:onClick="DoSync"
+            android:textSize="12dp"/>
+
+        <Button
+            android:id="@+id/download_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:text="DL"
+            android:onClick="DoDownload"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <LinearLayout
+            android:id="@+id/panel_link"
             android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
@@ -25,9 +99,11 @@
     </LinearLayout>
 
     <LinearLayout
+            android:id="@+id/panel_main"
             android:orientation="vertical"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
+            android:layout_height="fill_parent"
+            android:visibility="visible">
 
         <Spinner
             android:id="@+id/filespin"
@@ -44,66 +120,9 @@
         <TextView
             android:id="@+id/test_output"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
 
-        <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-
-            <Button
-                android:id="@+id/clear_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_gravity="center"
-                android:text="X"
-                android:onClick="DoClearMessages"/>
-
-            <Button
-android:id="@+id/add_button"
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:gravity="center"
-android:layout_gravity="center"
-android:text="+L"
-                android:onClick="DoAdd"/>
-
-            <Button
-                android:id="@+id/add_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_gravity="center"
-                android:text="+R"
-                android:onClick="DoAddRemote"/>
-
-            <Button
-                android:id="@+id/upload_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_gravity="center"
-                android:text="UL"
-                android:onClick="DoUpload"/>
-
-            <Button
-                android:id="@+id/sync_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_gravity="center"
-                android:text="Sync"
-                android:onClick="DoSync"/>
-
-            <Button
-                android:id="@+id/download_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_gravity="center"
-                android:text="DL"
-                android:onClick="DoDownload"/>
-        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

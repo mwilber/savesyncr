@@ -7,8 +7,8 @@
     style="@style/PathListItem"
     >
     <ImageView android:id="@+id/icon"
-	 android:layout_width="25dp"
-	 android:layout_height="25dp"
+	 android:layout_width="30dp"
+	 android:layout_height="30dp"
      android:layout_alignParentLeft="true"
      android:src="@android:drawable/ic_menu_save"
      android:layout_alignParentEnd="false"
@@ -30,33 +30,34 @@
 	    android:layout_toRightOf="@id/icon"
         android:text="/local/path.txt"/>
 
-    <ImageButton
-            android:layout_width="35dp"
-            android:layout_height="35dp"
+    <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:id="@+id/pathUpload"
             android:layout_alignParentTop="true"
             android:layout_alignRight="@+id/pathDownload"
-            android:layout_marginRight="29dp"
-            android:src="@android:drawable/ic_menu_upload"
-            />
+            android:layout_marginRight="35dp"
+            android:src="@drawable/upload"
+            android:clickable="true"/>
 
-    <ImageButton
-            android:layout_width="35dp"
-            android:layout_height="35dp"
+    <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:id="@+id/pathDownload"
             android:layout_alignParentTop="true"
             android:layout_alignRight="@+id/pathRemove"
-            android:layout_marginRight="29dp"
-            android:src="@android:drawable/ic_menu_rotate"
-            />
+            android:layout_marginRight="35dp"
+            android:src="@drawable/download"
+            android:clickable="true"/>
 
-    <ImageButton
-            android:layout_width="35dp"
-            android:layout_height="35dp"
+    <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:id="@+id/pathRemove"
             android:layout_alignParentTop="true"
             android:layout_alignRight="@+id/txtAlertText"
-            android:layout_marginRight="29dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            />
+            android:layout_marginRight="5dp"
+            android:src="@drawable/delete"
+            android:clickable="true"/>
+
 </RelativeLayout>

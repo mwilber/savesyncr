@@ -167,13 +167,18 @@ public class MainActivity extends Activity {
 	}
 
 	private void showLinkedView() {
-		mLinkButton.setVisibility(View.GONE);
-		mTestOutput.setVisibility(View.VISIBLE);
+		//mLinkButton.setVisibility(View.GONE);
+		//mTestOutput.setVisibility(View.VISIBLE);
+        ((LinearLayout)findViewById(R.id.panel_link)).setVisibility(View.GONE);
+        ((LinearLayout)findViewById(R.id.panel_main)).setVisibility(View.VISIBLE);
 	}
 
 	private void showUnlinkedView() {
-		mLinkButton.setVisibility(View.VISIBLE);
-		mTestOutput.setVisibility(View.GONE);
+		//mLinkButton.setVisibility(View.VISIBLE);
+		//mTestOutput.setVisibility(View.GONE);
+        ((LinearLayout)findViewById(R.id.panel_link)).setVisibility(View.VISIBLE);
+        ((LinearLayout)findViewById(R.id.panel_main)).setVisibility(View.GONE);
+
 	}
 
 	private void onClickLinkToDropbox() {
@@ -658,7 +663,9 @@ public class MainActivity extends Activity {
             //Get the text boxes from the listitem.xml file
             TextView alertText =(TextView)alertView.findViewById(R.id.txtAlertText);
             TextView alertDate =(TextView)alertView.findViewById(R.id.txtAlertDate);
-            ImageButton btnRemove = (ImageButton)alertView.findViewById(R.id.pathRemove);
+            ImageView btnRemove = (ImageView)alertView.findViewById(R.id.pathRemove);
+            ImageView btnUpload = (ImageView)alertView.findViewById(R.id.pathUpload);
+            ImageView btnDownload = (ImageView)alertView.findViewById(R.id.pathDownload);
 
             //Assign the appropriate data from our alert object above
             alertText.setText(al.name);
@@ -668,18 +675,27 @@ public class MainActivity extends Activity {
                 @Override
                 public void onClick(View view) {
                     Log.d(TAG, "string: " + al.name);
-                    PathAdapter.this.RemovePath(al.name);
+                    MainActivity.this.RemovePath(al.name);
+                }
+            });
 
-                    //Toast.makeText(context, "button clicked: " + al.name, Toast.LENGTH_SHORT).show();
+            btnUpload.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "string: " + al.name);
+                    MainActivity.this.PathUpload(al.name);
+                }
+            });
+
+            btnDownload.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "string: " + al.name);
+                    MainActivity.this.PathDownload(al.name);
                 }
             });
 
             return alertView;
-        }
-
-        public void RemovePath(String pIdx){
-            Log.d(TAG, "remove: " + pIdx);
-            MainActivity.this.RemovePath(pIdx);
         }
 
     }
