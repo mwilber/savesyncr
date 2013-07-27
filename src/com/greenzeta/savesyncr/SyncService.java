@@ -40,7 +40,7 @@ public class SyncService extends Service {
     private static final String appSecret = "e77781n0tunfpqb";
     private static final String dataStore = "savesyncr.dat";
     private static final int REQUEST_LINK_TO_DBX = 0;
-    private static final int updateInterval = 60;
+    private static final int updateInterval = 1800;
 
     private Timer timer;
     private String fsRoot;
@@ -51,8 +51,6 @@ public class SyncService extends Service {
         @Override
         public void run() {
             Log.i(TAG, "Timer task doing work");
-            //Toast.makeText(getBaseContext(), "SaveSyncr Service Running...", Toast.LENGTH_LONG).show();
-
 
             //Load the tracked paths from local storage
             pStore = new PathStore();
@@ -64,10 +62,35 @@ public class SyncService extends Service {
                 Log.d("STORED HASH", pStore.filePaths.toString());
                 in.close();
 
+                Intent intent = new Intent(SyncService.this, MainActivity.class);
+                PendingIntent pIntent = PendingIntent.getActivity(SyncService.this, 0, intent, 0);
+
+                // Build notification
+                Notification noti = new Notification.Builder(SyncService.this)
+                        .setContentTitle("SaveSyncr synchronization in progress...")
+                        .setContentText("Syncing")
+                        .setTicker("SaveSyncr synchronization in progress...")
+                                //.setLargeIcon((com.greenzeta.savesyncr.R.drawable.ic_launcher))
+                        .setSmallIcon(com.greenzeta.savesyncr.R.drawable.ic_launcher)
+                        .setContentIntent(pIntent)
+                        //.addAction(com.greenzeta.savesyncr.R.drawable.ic_launcher, "SaveSyncr synchronization in progress... ", pIntent)
+                        .build();
+
+
+                NotificationManager notificationManager =
+                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+                // Hide the notification after its selected
+                noti.flags |= Notification.FLAG_AUTO_CANCEL;
+
+                notificationManager.notify(0, noti);
+
                 for( HashMap.Entry entry : pStore.filePaths.entrySet() ){
                     System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue() );
                     PathSync(entry.getKey().toString());
                 }
+
+                notificationManager.cancel(0);
 
             }catch(IOException ex){
                 ex.printStackTrace();
